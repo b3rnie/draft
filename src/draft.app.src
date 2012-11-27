@@ -1,0 +1,10 @@
+{application, draft,
+ [ {description, ""}
+ , {vsn, git}
+ , {registered, [draft_server]}
+ , {applications, [kernel, stdlib]}
+ , {env, [ {handlers, [ draft_backend
+                      ]}
+         ]}
+ ]}.
+
