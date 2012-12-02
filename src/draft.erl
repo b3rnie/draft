@@ -11,31 +11,15 @@
 -include_lib("draft/include/draft.hrl").
 
 %%%_* Exports ==========================================================
--export([ debug/2
-        , info/2
-        , notice/2
-        , warning/2
-        , error/2
-        , critical/2
-        , alert/2
-        , emergency/2
-        ]).
-
--export([draft_call/4]).
+-export([call/4]). %parse transform
 
 %%%_* Code =============================================================
-debug(F, A)     -> draft_call(?debug,     F, A, []).
-info(F, A)      -> draft_call(?info,      F, A, []).
-notice(F, A)    -> draft_call(?notice,    F, A, []).
-warning(F, A)   -> draft_call(?warning,   F, A, []).
-error(F, A)     -> draft_call(?error,     F, A, []).
-critical(F, A)  -> draft_call(?critical,  F, A, []).
-alert(F, A)     -> draft_call(?alert,     F, A, []).
-emergency(F, A) -> draft_call(?emergency, F, A, []).
-
-draft_call(S, F, A, Info) ->
+call(S, F, A, Info) ->
   io:format("S: ~p~n~F: ~p~nA: ~p~nInfo: ~p~n", [S, F, A, Info]),
-  draft_server:log(S, F, A, Info).
+  draft_server:log(S, io_lib:format(F, A),
+                   [{node, erlang:node()},
+                    {pid,erlang:self()},
+                    {now, erlang:now()}|Info]).
 
 %%%_ * Internal --------------------------------------------------------
 %%%_* Tests ============================================================
@@ -43,15 +27,18 @@ draft_call(S, F, A, Info) ->
 -include_lib("eunit/include/eunit.hrl").
 
 draft_test() ->
-    draft:debug("foo"),
-    draft:info("foo"),
-    draft:notice("foo"),
-    draft:warning("foo"),
-    draft:error("foo"),
-    draft:critical("foo"),
-    draft:alert("foo"),
-    draft:emergency("foo"),
-    ok.
+  ok = application:start(draft),
+  draft:debug("foo"),
+  ?debug("foo ~s~n", ["bar"]),
+  draft:info("foo"),
+  draft:notice("foo"),
+  draft:warning("foo"),
+  draft:error("foo"),
+  draft:critical("foo"),
+  draft:alert("foo"),
+  draft:emergency("foo"),
+  application:stop(draft),
+  ok.
 
 -else.
 -endif.

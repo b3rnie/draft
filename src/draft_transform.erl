@@ -52,8 +52,6 @@ walk_function_body([{call, Line,
                 [ {module,   {atom, Line, S#s.module}}
                 , {function, {atom, Line, S#s.function}}
                 , {line,     {integer, Line, Line}}
-                , {pid,      call(Line, erlang, self, [])}
-                , {now,      call(Line, erlang, now,  [])}
                 ]),
     {F, A} = case Args of
                [_F]     -> {_F, {nil, Line}};

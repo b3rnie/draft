@@ -3,7 +3,10 @@
  , {vsn, git}
  , {registered, [draft_server]}
  , {applications, [kernel, stdlib]}
- , {env, [ {handlers, [ draft_backend
+ , {env, [ {backends, [ {draft_backend_file, [ {path, "logs"}
+                                             , {size, 1000000} %10mb
+                                             ]}
+                      , {draft_backend_error_logger, []}
                       ]}
          ]}
  ]}.

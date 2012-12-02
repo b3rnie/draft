@@ -28,7 +28,7 @@
 
 %%%_* Code =============================================================
 %%%_ * Types -----------------------------------------------------------
--record(s, {handlers, pid}).
+-record(s, {backends, pid}).
 
 %%%_ * API -------------------------------------------------------------
 start_link() ->
@@ -41,26 +41,26 @@ log(S, F, A, Info) ->
   gen_server:call(?MODULE, {log, S, F, A, Info}).
 
 %%%_ * gen_server callbacks --------------------------------------------
-init(Args) ->
+init([]) ->
   {ok, Pid}      = gen_event:start_link(),
-  {ok, Handlers} = application:get_env(draft, handlers),
-  lists:foreach(fun(Handler) ->
-                        gen_event:add_sup_handler(Pid, Handler, [])
+  {ok, Handlers} = application:get_env(draft, backends),
+  lists:foreach(fun({Backend, Args}) ->
+                    gen_event:add_sup_handler(Pid, Backend, Args)
                 end, Handlers),
-  {ok, #s{handlers=Handlers, pid=Pid}}.
+  {ok, #s{backends=Backends, pid=Pid}}.
 
-terminate(_Rsn, #s{pid=Pid, handlers=Handlers}) ->
-  lists:foreach(fun(Handler) ->
-                        gen_event:delete_handler(Pid, Handler, [])
-                end, Handlers),
+terminate(_Rsn, #s{pid=Pid, backends=Handlers}) ->
+  lists:foreach(fun({Backend,Args}) ->
+                    gen_event:delete_handler(Pid, Backend, [])
+                end, Backends),
   ok = gen_event:stop(Pid).
 
-handle_call({log, Severity, F, A, Info}, From, S) ->
-  erlang:spawn_link(fun() ->
-                        gen_event:sync_notify(S#s.pid, {log, Severity,
-                                                        F, A, Info}),
-                        gen_server:reply(From, ok)
-                    end),
+handle_call({log, Severity, Msg, Info}, From, S) ->
+  F = fun() ->
+          gen_event:sync_notify(S#s.pid, {log, Severity, Msg, Info}),
+          gen_server:reply(From, ok)
+      end,
+  erlang:spawn_link(F),
   {noreply, S};
 handle_call(stop, _From, S) ->
   {stop, normal, ok, S}.
@@ -80,11 +80,6 @@ code_change(_OldVsn, S, _Extra) ->
   {ok, S}.
 
 %%%_ * Internals -------------------------------------------------------
-assoc(K, L, D) ->
-  case lists:keyfind(K, 1, L) of
-    {K, V} -> V;
-    false  -> D
-  end.
 
 %%%_* Tests ============================================================
 -ifdef(TEST).

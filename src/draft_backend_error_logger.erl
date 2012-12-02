@@ -6,7 +6,7 @@
 
 %%%_* Module declaration ===============================================
 -module(draft_error_logger_backend).
--behaviour(gen_server).
+-behaviour(gen_event).
 
 %%%_* Exports ==========================================================
 -export([ init/1
